@@ -12,3 +12,22 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Conversation {
+  id              Int               @id @default(autoincrement())
+  createdAt       DateTime          @default(now())
+  message         Message[]
+
+  @@map("conversation")
+}
+
+model Message {
+  id              String            @id @default(uuid())
+  conversationId  Int?
+  content         String
+  createdAt       DateTime          @default(now())
+
+  conversation    Conversation?     @relation(fields: [conversationId], references: [id])
+
+  @@map("message")
+}

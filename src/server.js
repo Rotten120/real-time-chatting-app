@@ -1,5 +1,5 @@
 import express from "express"
-import { Server } from "socket.io"
+import { initSocket } from "./socket.js"
 
 import { createServer } from "node:http"
 import { fileURLToPath } from "node:url"
@@ -7,7 +7,7 @@ import { dirname, join } from "node:path"
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server);
+const io = initSocket(server);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
