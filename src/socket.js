@@ -5,17 +5,17 @@ export function initSocket(server) {
   const io = new Server(server);
 
   io.on("connection", async (socket) => {
-    const conversationId = socket.handshake.auth.conversationId;
+    const chatRoomId = socket.handshake.auth.chatRoomId;
 
-    console.log(`Connected to room ${conversationId}`);
+    console.log(`Connected to room ${chatRoomId}`);
 
     socket.on('chat message', async (msg, callback) => {
       const message = await prisma.message.create({
-        data: { content: msg, conversationId }
+        data: { content: msg, chatRoomId }
       });
 
-      console.log(`rendered to room  ${conversationId}: `, message.content, " : date: ", message.createdAt);
-      io.to(conversationId).emit('chat message', message.content, message.createdAt);
+      console.log(`rendered to room  ${chatRoomId}: `, message.content, " : date: ", message.createdAt);
+      socket.emit('chat message', message.content, message.createdAt);
       callback({ status: 'ok' });
     });
 
@@ -33,14 +33,14 @@ export function initSocket(server) {
         const prev_messages = await prisma.message.findMany({
           where: {
             createdAt: { lte: lastSeen },
-            conversationId
+            chatRoomId
           },
           orderBy: { createdAt: "desc" }
         });
       
         if(prev_messages.length > 0) {
           for(let pmsg of prev_messages.reverse()) {
-            console.log(`rendered to room  ${conversationId}: `, pmsg.content, " : date: ", pmsg.createdAt);
+            console.log(`rendered to room  ${chatRoomId}: `, pmsg.content, " : date: ", pmsg.createdAt);
             socket.emit('chat message', pmsg.content, pmsg.createdAt)
           }
         }
@@ -50,13 +50,13 @@ export function initSocket(server) {
       const missed_messages = await prisma.message.findMany({
         where: {
           createdAt: { gt: lastSeen },
-          conversationId
+          chatRoomId
         },
         orderBy: { createdAt: "asc" }
       });
 
       for(let msg of missed_messages) {
-        console.log(`rendered to room  ${conversationId}: `, msg.content, " : date: ", msg.createdAt);
+        console.log(`rendered to room  ${chatRoomId}: `, msg.content, " : date: ", msg.createdAt);
         socket.emit('chat message', msg.content, msg.createdAt);
       }
 
@@ -64,7 +64,7 @@ export function initSocket(server) {
       console.log("Something went wrong: ", error);
     }
 
-    socket.join(conversationId);
+    socket.join(chatRoomId);
   });
 
   return io;

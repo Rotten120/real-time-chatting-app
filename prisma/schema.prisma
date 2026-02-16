@@ -13,22 +13,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Conversation {
+model User {
+  id              String            @id default(uuid())
+  email           String            @unique
+  name            String
+  password        String
+  createdAt       DateTime          @default(now())
+
+  chatRoom        ChatRoom[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model ChatRoom {
   id              String            @id @default(uuid())
   name            String
   createdAt       DateTime          @default(now())
+
   message         Message[]
 
-  @@map("conversation")
+  @@map("chatroom")
 }
 
 model Message {
   id              String            @id @default(uuid())
-  conversationId  String
+  chatRoomId      String
   content         String
   createdAt       DateTime          @default(now())
 
-  conversation    Conversation      @relation(fields: [conversationId], references: [id])
+  chatroom        ChatRoom          @relation(fields: [chatRoomId], references: [id])
 
   @@map("message")
 }

@@ -6,6 +6,8 @@ import { createServer } from "node:http"
 import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
+import chatRouter from "./api/chatRoutes.js"
+
 const app = express();
 const server = createServer(app);
 const io = initSocket(server);
@@ -13,27 +15,22 @@ const io = initSocket(server);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 app.use(express.json());
+app.use(express.static(join(__dirname, "..", "public")));
 
-app.get("/c/:conversationId", async (req, res) => {
-  const { conversationId } = req.params;
-  const conversation = await prisma.conversation.findUnique({
-    where: { id: conversationId }
+app.get("/c/:chatRoomId", async (req, res) => {
+  const { chatRoomId } = req.params;
+  const chatroom = await prisma.chatRoom.findUnique({
+    where: { id: chatRoomId }
   });
 
-  if(!conversation) {
+  if(!chatroom) {
     return res.sendStatus(404);
   }
   
   res.sendFile(join(__dirname, '..', 'public', 'index.html'));
 });
 
-app.post("/:convo_name", async (req, res) => {
-  const params = req.params;
-  const conversation = await prisma.conversation.create({
-    data: { name: params.convo_name }
-  });
-  res.send(conversation);
-});
+app.use("/chat", chatRouter);
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server listening to port ${PORT}`));
