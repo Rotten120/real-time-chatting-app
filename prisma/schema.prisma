@@ -14,7 +14,8 @@ datasource db {
 }
 
 model Conversation {
-  id              Int               @id @default(autoincrement())
+  id              String            @id @default(uuid())
+  name            String
   createdAt       DateTime          @default(now())
   message         Message[]
 
@@ -23,11 +24,11 @@ model Conversation {
 
 model Message {
   id              String            @id @default(uuid())
-  conversationId  Int?
+  conversationId  String
   content         String
   createdAt       DateTime          @default(now())
 
-  conversation    Conversation?     @relation(fields: [conversationId], references: [id])
+  conversation    Conversation      @relation(fields: [conversationId], references: [id])
 
   @@map("message")
 }

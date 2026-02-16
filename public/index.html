@@ -26,8 +26,10 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
+    const conversationId = window.location.pathname.split("/c/")[1];
+    console.log(conversationId);
     const socket = io({
-      auth: { lastMsg: new Date(2000, 10, 30) }
+      auth: { lastMsg: new Date(2000, 10, 30), conversationId }
     });
 
     const form = document.getElementById('form');
