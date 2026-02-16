@@ -1,12 +1,18 @@
 import express from "express"
+import cookieParser from "cookie-parser"
+
 import { initSocket } from "./socket.js"
-import { prisma } from "./prismaClient.js"
+import { prisma } from "./lib/prismaClient.js"
 
 import { createServer } from "node:http"
 import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
 
-import chatRouter from "./api/chatRoutes.js"
+import { authMiddleware } from "./middleware/authMiddleware.js"
+
+import chatRoutes from "./api/chatRoutes.js"
+import authRoutes from "./api/authRoutes.js"
+import userRoutes from "./api/userRoutes.js"
 
 const app = express();
 const server = createServer(app);
@@ -14,6 +20,7 @@ const io = initSocket(server);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+app.use(cookieParser())
 app.use(express.json());
 app.use(express.static(join(__dirname, "..", "public")));
 
@@ -30,7 +37,9 @@ app.get("/c/:chatRoomId", async (req, res) => {
   res.sendFile(join(__dirname, '..', 'public', 'index.html'));
 });
 
-app.use("/chat", chatRouter);
+app.use("/auth", authRoutes);
+app.use("/chat", chatRoutes);
+app.use("/user", authMiddleware, userRoutes);
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server listening to port ${PORT}`));
