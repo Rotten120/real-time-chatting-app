@@ -1,5 +1,5 @@
 
-const chatRoomId = window.location.pathname.split("/c/")[1];
+const chatRoomId = window.location.pathname.split("/chat/t/")[1];
 const socket = io({
   auth: {
     lastMsg: new Date(2000, 10, 30),

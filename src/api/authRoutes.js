@@ -62,7 +62,7 @@ router.post("/login", async (req, res) => {
   } 
 });
 
-router.post("/logout", (req, res) => {
+router.post("/logout", async (req, res) => {
   await setCookie(res, "", 0); 
   res.json({ message: "Successfully logged out" })
 })
