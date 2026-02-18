@@ -8,7 +8,6 @@ import { getPath } from "./lib/dirname.js"
 import { createServer } from "node:http"
 
 import { authMiddleware } from "./middleware/authMiddleware.js"
-import { chatMiddleware } from "./middleware/chatMiddleware.js"
 
 import chatRoutes from "./api/chatRoutes.js"
 import authRoutes from "./api/authRoutes.js"
@@ -23,7 +22,7 @@ app.use(express.json());
 app.use(express.static(getPath("..", "..", "public")));
 
 app.use("/auth", authRoutes);
-app.use("/chat", chatRoutes);
+app.use("/chat", authMiddleware, chatRoutes);
 app.use("/user", authMiddleware, userRoutes);
 
 const PORT = process.env.PORT;

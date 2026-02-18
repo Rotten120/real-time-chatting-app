@@ -26,7 +26,7 @@ router.post('/register', async (req, res) => {
       data: {email, name, password: hashedPassword} 
     });
 
-    const token = await setCookie(id);
+    const token = await setCookie(res, id);
 
     res.status(201).json({ message: "Account successfully registered", token });
   } catch(error) {

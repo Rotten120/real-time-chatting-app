@@ -14,13 +14,14 @@ datasource db {
 }
 
 model User {
-  id              String            @id default(uuid())
+  id              String            @id @default(uuid())
   email           String            @unique
   name            String
   password        String
   createdAt       DateTime          @default(now())
 
-  chatRoom        ChatRoom[]
+  memberships     ChatMember[]
+  messages        Message[]
 
   @@index([email])
   @@map("users")
@@ -31,18 +32,34 @@ model ChatRoom {
   name            String
   createdAt       DateTime          @default(now())
 
-  message         Message[]
-
+  members         ChatMember[]
+  messages        Message[]
+  
   @@map("chatroom")
+}
+
+model ChatMember {
+  id              String            @id @default(uuid())
+  userId          String
+  chatRoomId      String
+  joinedAt        DateTime          @default(now())
+  
+  user            User              @relation(fields: [userId], references: [id])
+  chatRoom        ChatRoom          @relation(fields: [chatRoomId], references: [id])
+
+  @@map("chatmember")
 }
 
 model Message {
   id              String            @id @default(uuid())
   chatRoomId      String
+  userId          String
   content         String
   createdAt       DateTime          @default(now())
 
-  chatroom        ChatRoom          @relation(fields: [chatRoomId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  chatRoom        ChatRoom          @relation(fields: [chatRoomId], references: [id])
 
+  @@index([chatRoomId, createdAt])
   @@map("message")
 }
