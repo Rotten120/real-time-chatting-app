@@ -7,7 +7,7 @@ export const chatRoomExists = async (req, res, next) => {
   });
 
   if(!chatRoomId) {
-    return res.sendStatus(404);
+    return res.status(404).json({ message: "Chat room does not exist" });
   }
 
   req.chatRoom = chatRoom;
@@ -23,7 +23,7 @@ export const requireChatRoomMember = async (req, res, next) => {
   });
 
   if(chatMember.length === 0) {
-    return res.sendStatus(404);
+    return res.status(404).json({ message: "User does not have permission to access the request" });
   }
 
   req.chatMember = chatMember;

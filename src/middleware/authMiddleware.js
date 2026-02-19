@@ -1,19 +1,27 @@
+import { prisma } from "../lib/prismaClient.js"
 import { verifyToken } from "../lib/auth.js"
 
 export const authMiddleware = async (req, res, next) => {
   const token = req.cookies.token;
   if(!token) {
-    return res.status(401).json({message: "No token provided"});
+    return res.status(401).json({ message: "No token provided" });
   }
 
-  verifyToken(token, (err, decoded) => {
+  verifyToken(token, async (err, decoded) => {
     if(err) {
-      console.log(err);
-      return res.status(401).json({message: "Invalid token"});
+      return res.status(401).json({ message: "Invalid token" });
     }
-    req.userId = decoded.userId;
 
-    // optional: search the user if it still in the database
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId }
+    });   
+
+    if(!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    const { password, ...userRequest } = user;
+    req.user = userRequest
 
     next();
   });

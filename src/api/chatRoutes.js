@@ -8,36 +8,42 @@ const chatRoomAccess = [chatRoomExists, requireChatRoomMember];
 
 router.post("/:chatRoomName", async (req, res) => {
   const { chatRoomName } = req.params;
-  const chatroom = await prisma.chatRoom.create({
+  const chatRoom = await prisma.chatRoom.create({
     data: { name: chatRoomName }
   });
 
-  res.send(chatroom);
+  await prisma.chatMember.create({
+    data: {
+      userId: req.user.id,
+      chatRoomId: chatRoom.id
+    }
+  }); 
+
+  res.status(400).json(chatRoom);
 });
 
-router.get("/t/:chatRoomId", chatRoomAccess, async (req, res) => {
-  const { chatRoomId } = req.params;
-
-  if(!chatRoomId) {
-    return res.sendStatus(404);
-  }
-  
+router.get("/t/:chatRoomId", chatRoomAccess, async (req, res) => {  
   res.sendFile(getPath("..", "..", "public", "index.html"));
 });
 
 router.get("/:chatRoomId", chatRoomAccess, async (req, res) => {
-  const { chatRoomId } = req.params;
-  const chatroom = await prisma.chatRoom.findUnique({
-    data: { id: chatRoomId }
+  const chatRoomMembers = await prisma.chatMember.findMany({
+    where: { chatRoomId: req.chatRoom.id },
+    select: {
+      user: { select: { name: true } },
+      joinedAt: true
+    }
   });
-
-  if(!chatroom) {
-    res.sendStatus(404);
-  }
-
-  res.json({ name: chatroom.name });
+  
+  res.json({
+    name: req.chatRoom.name,
+    createdAt: req.chatRoom.createdAt,
+    members: chatRoomMembers,
+    memberCount: chatRoomMembers.length
+  });
 });
 
+//there could be groupchats that exists without members
 router.delete("/:chatRoomId/members", chatRoomAccess, async (req, res) => {
   await prisma.chatMember.deleteMany({
     where: {
@@ -51,6 +57,8 @@ router.delete("/:chatRoomId/members", chatRoomAccess, async (req, res) => {
 
 router.post("/:chatRoomId/members", chatRoomExists, async (req, res) => {
   const { chatRoomId } = req.params;
+
+  //checks if user is already member of chat room
   let chatMember = await prisma.chatMember.findMany({
     where: {
       userId: req.userId,
@@ -62,6 +70,7 @@ router.post("/:chatRoomId/members", chatRoomExists, async (req, res) => {
     return res.status(409).json({ message: "User already part of the chat room" });
   };
   
+  //if not then it adds them
   chatMember = await prisma.chatMember.create({
     data: {
       userId: req.userId,
