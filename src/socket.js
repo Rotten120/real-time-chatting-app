@@ -1,63 +1,84 @@
 import { Server } from "socket.io"
 import { prisma } from "./lib/prismaClient.js"
+import { Message, MessageLog } from "./lib/message.js"
+import { socketMiddleware } from "./middleware/socketMiddleware.js"
 
 export function initSocket(server) {
   const io = new Server(server);
 
+  io.use(socketMiddleware);
+
   io.on("connection", async (socket) => {
     const chatRoomId = socket.handshake.auth.chatRoomId;
 
-    console.log(`Connected to room ${chatRoomId}`);
+    console.log(`User ${socket.user.name} connects to room ${chatRoomId}`);
+    socket.emit('me', socket.user);
 
     socket.on('chat message', async (msg, callback) => {
-      const message = await prisma.message.create({
-        data: { content: msg, chatRoomId }
-      });
+      try {
+        const newMessage = await prisma.message.create({
+          data: { content: msg, chatRoomId, userId: socket.user.id }
+        });
 
-      console.log(`rendered to room  ${chatRoomId}: `, message.content, " : date: ", message.createdAt);
-      socket.emit('chat message', message.content, message.createdAt);
-      callback({ status: 'ok' });
+        const message = Message(socket.user.name, newMessage.content, newMessage.createdAt);
+        socket.to(chatRoomId).emit('chat message', message);
+        MessageLog(message, chatRoomId);
+
+        callback({ status: 'delivered' });
+      } catch(error) {
+        console.log(error);
+        callback({ status: 'failed' }); 
+      }
     });
 
+    
     // message recovery (yes its complicated)
 
     try {
 
+      // condition should be changed
       const lastSeen = new Date(socket.handshake.auth.lastMsg);
 
-      // the lastSeen condition should be changed
       // should only execute when first time rendering of client
-      // currently, the server sends all prev messages when connecting
       if(lastSeen == new Date(2000, 10, 30)) {
-        // renders the last 10 msgs user have seen
-        const prev_messages = await prisma.message.findMany({
-          where: {
-            createdAt: { lte: lastSeen },
-            chatRoomId
-          },
-          orderBy: { createdAt: "desc" }
+        // sends all previous messages
+        const prevMessages = await prisma.message.findMany({
+          where: {createdAt: { lte: lastSeen }, chatRoomId},
+          orderBy: { createdAt: "desc" },
+          select: {
+            content: true,
+            createdAt: true,
+            user: {select: { name: true }}
+          }
         });
-      
-        if(prev_messages.length > 0) {
-          for(let pmsg of prev_messages.reverse()) {
-            console.log(`rendered to room  ${chatRoomId}: `, pmsg.content, " : date: ", pmsg.createdAt);
-            socket.emit('chat message', pmsg.content, pmsg.createdAt)
+     
+
+        console.log(prevMessages);
+
+        if(prevMessages.length > 0) {
+          for(let pm of prevMessages.reverse()) {
+            const prevMessage = Message(pm.user.name, pm.content, pm.createdAt);
+            socket.emit('chat recover', prevMessage);
+            MessageLog(prevMessage, chatRoomId);
           }
         }
       }
 
       // renders the messages sent while user is offline
-      const missed_messages = await prisma.message.findMany({
-        where: {
-          createdAt: { gt: lastSeen },
-          chatRoomId
-        },
-        orderBy: { createdAt: "asc" }
+      const missedMessages = await prisma.message.findMany({
+        where: {createdAt: { gt: lastSeen }, chatRoomId},
+        orderBy: { createdAt: "asc" },
+        select: {
+          content: true,
+          createdAt: true,
+          user: {select: { name: true }}
+        }
       });
 
-      for(let msg of missed_messages) {
-        console.log(`rendered to room  ${chatRoomId}: `, msg.content, " : date: ", msg.createdAt);
-        socket.emit('chat message', msg.content, msg.createdAt);
+      for(let mm of missedMessages) {
+        const missedMessage = Message(mm.user.name, mm.content, mm.createdAt);
+        socket.emit('chat recover', missedMessage);
+        MessageLog(missedMessage, chatRoomId)
       }
 
     } catch(error) {
