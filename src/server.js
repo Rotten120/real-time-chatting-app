@@ -25,5 +25,9 @@ app.use("/auth", authRoutes);
 app.use("/chat", authMiddleware, chatRoutes);
 app.use("/user", authMiddleware, userRoutes);
 
+app.get("/", (req, res) => {
+  res.sendFile(getPath("..", "..", "public", "index.html"));
+});
+
 const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server listening to port ${PORT}`));
