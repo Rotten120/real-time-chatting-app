@@ -13,7 +13,7 @@ export const generateToken = async (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 }
 
-export const verifyToken = async (token, callback = null) => {
-  return jwt.verify(token, process.env.JWT_SECRET, callback);
+export const verifyToken = (token) => {
+  return jwt.verify(token, process.env.JWT_SECRET);
 }
 
