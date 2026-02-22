@@ -53,7 +53,7 @@ router.post("/login", async (req, res) => {
       return res.status(409).json({ message: "Email or password is incorrect. Please try again" })
     }
 
-    const token = await setCookie(res, userDB.id)
+    const token = await setCookie(res, userDB.id)  
 
     res.json({ message: "Account successfully logged in", token });
   } catch(error) {

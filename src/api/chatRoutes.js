@@ -22,8 +22,8 @@ router.post("/:chatRoomName", async (req, res) => {
   res.status(400).json(chatRoom);
 });
 
-router.get("/t/:chatRoomId", chatRoomAccess, async (req, res) => {  
-  res.sendFile(getPath("..", "..", "public", "index.html"));
+router.get("/t/:chatRoomId", chatRoomAccess, async (req, res) => {
+  res.sendFile(getPath("..", "..", "public", "client.html"));
 });
 
 router.get("/:chatRoomId", chatRoomAccess, async (req, res) => {
@@ -47,7 +47,7 @@ router.get("/:chatRoomId", chatRoomAccess, async (req, res) => {
 router.delete("/:chatRoomId/members", chatRoomAccess, async (req, res) => {
   await prisma.chatMember.deleteMany({
     where: {
-      userId: req.userId,
+      userId: req.user.id,
       chatRoomId: req.chatRoom.id
     }
   });
@@ -61,7 +61,7 @@ router.post("/:chatRoomId/members", chatRoomExists, async (req, res) => {
   //checks if user is already member of chat room
   let chatMember = await prisma.chatMember.findMany({
     where: {
-      userId: req.userId,
+      userId: req.user.id,
       chatRoomId: req.chatRoom.id
     }
   }); 
@@ -73,7 +73,7 @@ router.post("/:chatRoomId/members", chatRoomExists, async (req, res) => {
   //if not then it adds them
   chatMember = await prisma.chatMember.create({
     data: {
-      userId: req.userId,
+      userId: req.user.id,
       chatRoomId: req.chatRoom.id
     }
   });
