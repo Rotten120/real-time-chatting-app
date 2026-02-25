@@ -9,6 +9,15 @@ router.get("/", async (req, res) => {
   return res.json({...userDB}); 
 });
 
+router.get("/chatrooms", async (req, res) => {
+  const chatRooms = await prisma.chatMember.findMany({
+    where: { userId: req.user.id },
+    select: { chatRoom: { select: { id: true, name: true } } }
+  });
+
+  res.json(chatRooms);
+});
+
 // this does not have input validation (i.e. password length etc.)
 // could be validated over the client
 router.post("/password", async (req, res) => {
@@ -45,6 +54,25 @@ router.post("/password", async (req, res) => {
   });
 
   return res.json({ message: "Password set successfully" })
-})
+});
+
+router.delete("/", async (req, res) => {
+  const { password } = req.body;
+
+  if(!password) {
+    res.status(400).json({ message: "Password is a required field" });
+  }
+
+  const isVerified = await verifyPassword(password, req.user.password);
+  if(!isVerified) {
+    return res.status(409).json({ message: "Password is incorrect. Please try again" });
+  } 
+
+  await prisma.user.deleteUnique({
+    where: { id: req.user.id }
+  }); 
+
+  res.status(204).json({ message; "User has been successfully deleted" });
+});
 
 export default router;

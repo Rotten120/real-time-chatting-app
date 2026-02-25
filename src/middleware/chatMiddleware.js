@@ -17,7 +17,7 @@ export const chatRoomExists = async (req, res, next) => {
 export const requireChatRoomMember = async (req, res, next) => {
   const chatMember = await prisma.chatMember.findMany({
     where: {
-      userId: req.userId,
+      userId: req.user.id,
       chatRoomId: req.chatRoom.id
     }
   });
@@ -26,6 +26,6 @@ export const requireChatRoomMember = async (req, res, next) => {
     return res.status(404).json({ message: "User does not have permission to access the request" });
   }
 
-  req.chatMember = chatMember;
+  req.chatMember = chatMember[0];
   next();
 }
