@@ -15,7 +15,7 @@ router.post("/:chatRoomName", async (req, res) => {
   await prisma.chatMember.create({
     data: {
       userId: req.user.id,
-      chatRoomId: chatRoom.id
+      chatRoomId: chatRoom.id 
     }
   }); 
 
@@ -26,11 +26,22 @@ router.get("/t/:chatRoomId", chatRoomAccess, async (req, res) => {
   res.sendFile(getPath("..", "..", "public", "client.html"));
 });
 
+// gets chatroom name for non-members
+router.get("/:chatRoomId/name", chatRoomExists, async (req, res) => {
+  const { name } = await prisma.chatRoom.findUnique({
+    where: { id: req.chatRoom.id }
+  });
+
+  res.json({ chatRoomName: name });
+});
+
+// gets chatroom deets for members
 router.get("/:chatRoomId", chatRoomAccess, async (req, res) => {
   const chatRoomMembers = await prisma.chatMember.findMany({
     where: { chatRoomId: req.chatRoom.id },
     select: {
-      user: { select: { name: true } },
+      user: { select: { name: true, email: true } },
+      role: true,
       joinedAt: true
     }
   });
@@ -41,6 +52,17 @@ router.get("/:chatRoomId", chatRoomAccess, async (req, res) => {
     members: chatRoomMembers,
     memberCount: chatRoomMembers.length
   });
+});
+
+router.patch("/:chatRoomId", chatRoomAccess, async (req, res) => {
+  const { chatRoomName } = req.body;
+  
+  const updateChatRoom = await prisma.chatRoom.update({
+    where: { id: req.chatRoom.id },
+    data: { name: chatRoomName }
+  });
+
+  res.json({ message: "Chatroom name has been successfully changed", name: updateChatRoom.name });
 });
 
 //there could be groupchats that exists without members
