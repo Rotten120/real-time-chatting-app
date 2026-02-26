@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken"
 import { prisma } from "../lib/prismaClient.js"
 import { hashPassword, verifyPassword } from "../lib/auth.js"
 import { setCookie } from "../lib/cookies.js"
+import { authMiddleware } from "../middleware/authMiddleware.js"
 
 const router = express.Router();
 
@@ -53,7 +54,7 @@ router.post("/login", async (req, res) => {
       return res.status(409).json({ message: "Email or password is incorrect. Please try again" })
     }
 
-    const token = await setCookie(res, userDB.id)  
+  const token = await setCookie(res, userDB.id)  
 
     res.json({ message: "Account successfully logged in", token });
   } catch(error) {
@@ -65,7 +66,11 @@ router.post("/login", async (req, res) => {
 router.post("/logout", async (req, res) => {
   await setCookie(res, "", 0); 
   res.json({ message: "Successfully logged out" })
-})
+});
+
+router.get("/me", authMiddleware, async (req, res) => {
+  return res.json({"userId": req.user.id});
+});
 
 export default router;
 

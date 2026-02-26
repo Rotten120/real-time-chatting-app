@@ -72,7 +72,7 @@ router.delete("/", async (req, res) => {
     where: { id: req.user.id }
   }); 
 
-  res.status(204).json({ message; "User has been successfully deleted" });
+  res.status(204).json({ message: "User has been successfully deleted" });
 });
 
 export default router;
