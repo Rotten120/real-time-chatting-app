@@ -20,7 +20,13 @@ export function initSocket(server) {
           data: { content: msg, chatRoomId, userId: socket.user.id }
         });
 
-        const message = Message(socket.user.name, newMessage.content, newMessage.createdAt);
+        const message = Message(
+          newMessage.id, 
+          socket.user.name,
+          newMessage.content,
+          newMessage.createdAt
+        );
+
         socket.to(chatRoomId).emit('chat message', message);
         MessageLog(message, chatRoomId);
 
@@ -35,35 +41,6 @@ export function initSocket(server) {
     // message recovery (yes its complicated)
 
     try {
-
-      // condition should be changed
-      const lastSeen = new Date(socket.handshake.auth.lastMsg);
-
-      // should only execute when first time rendering of client
-      if(lastSeen == new Date(2000, 10, 30)) {
-        // sends all previous messages
-        const prevMessages = await prisma.message.findMany({
-          where: {createdAt: { lte: lastSeen }, chatRoomId},
-          orderBy: { createdAt: "desc" },
-          select: {
-            content: true,
-            createdAt: true,
-            user: {select: { name: true }}
-          }
-        });
-     
-
-        console.log(prevMessages);
-
-        if(prevMessages.length > 0) {
-          for(let pm of prevMessages.reverse()) {
-            const prevMessage = Message(pm.user.name, pm.content, pm.createdAt);
-            socket.emit('chat recover', prevMessage);
-            MessageLog(prevMessage, chatRoomId);
-          }
-        }
-      }
-
       // renders the messages sent while user is offline
       const missedMessages = await prisma.message.findMany({
         where: {createdAt: { gt: lastSeen }, chatRoomId},
@@ -76,7 +53,13 @@ export function initSocket(server) {
       });
 
       for(let mm of missedMessages) {
-        const missedMessage = Message(mm.user.name, mm.content, mm.createdAt);
+        const missedMessage = Message(
+          mm.id,
+          mm.user.name,
+          mm.content,
+          mm.createdAt
+        );
+
         socket.emit('chat recover', missedMessage);
         MessageLog(missedMessage, chatRoomId)
       }
