@@ -9,7 +9,10 @@ import { createServer } from "node:http"
 
 import { authMiddleware } from "./middleware/authMiddleware.js"
 
-import chatRoutes from "./api/chatRoutes.js"
+import chatRoomRoutes from "./api/chat/chatRoomRoutes.js"
+import memberRoutes from "./api/chat/memberRoutes.js"
+import messageRoutes from "./api/chat/messageRoutes.js"
+
 import authRoutes from "./api/authRoutes.js"
 import userRoutes from "./api/userRoutes.js"
 
@@ -22,7 +25,9 @@ app.use(express.json());
 app.use(express.static(getPath("..", "..", "public")));
 
 app.use("/auth", authRoutes);
-app.use("/chat", authMiddleware, chatRoutes);
+app.use("/chat", authMiddleware, chatRoomRoutes);
+app.use("/chat", authMiddleware, memberRoutes);
+app.use("/chat", authMiddleware, messageRoutes);
 app.use("/user", authMiddleware, userRoutes);
 
 app.get("/", (req, res) => {

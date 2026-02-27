@@ -29,3 +29,5 @@ export const requireChatRoomMember = async (req, res, next) => {
   req.chatMember = chatMember[0];
   next();
 }
+
+export const chatRoomAccess = [chatRoomExists, requireChatRoomMember];
