@@ -2,6 +2,11 @@ import cookie from "cookie";
 import { prisma } from "../lib/prismaClient.js"
 import { verifyToken } from "../lib/auth.js"
 
+/*
+ * socketMiddleware
+ * Description: Authenticates user before connecting to websocket
+ *
+ */
 export const socketMiddleware = async (socket, next) => {
   const cookies = cookie.parse(socket.handshake.headers.cookie || "");
   const token = cookies.token;

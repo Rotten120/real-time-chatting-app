@@ -5,6 +5,18 @@ import { Message } from "../../lib/message.js"
 
 const router = express.Router();
 
+/*
+ * Route: DELETE /chat/:chatRoomId/members
+ * Description: Removes a user from the chatroom
+ * Middleware: authMiddleware, chatRoomAccess
+ *
+ * Success Response:
+ *   204 NO CONTENT
+ *   {
+ *     message: string
+ *   }
+ *
+ */
 //there could be groupchats that exists without members
 router.delete("/:chatRoomId/members", chatRoomAccess, async (req, res) => {
   await prisma.chatMember.deleteMany({
@@ -17,6 +29,20 @@ router.delete("/:chatRoomId/members", chatRoomAccess, async (req, res) => {
   res.status(204).json({ message: "User has been removed from the chat group" });
 });
 
+/*
+ * Route: POST /chat/:chatRoomId/members
+ * Description: Adds a user to the chatroom
+ * Middleware: authMiddleware, chatRoomExists
+ *
+ * Success Response:
+ *   201 CREATED
+ *   {
+ *     message: string
+ *   }
+ *
+ * Error:
+ *   409 user already in chatroom
+ */
 router.post("/:chatRoomId/members", chatRoomExists, async (req, res) => {
   //checks if user is already member of chat room
   let chatMember = await prisma.chatMember.findMany({

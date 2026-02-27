@@ -4,11 +4,42 @@ import { verifyPassword, hashPassword } from "../lib/auth.js"
 
 const router = express.Router();
 
+/*
+ * Route: GET /user/
+ * Description: Fetches the user details except the password 
+ * Middleware: authMiddleware
+ * 
+ * Success Reponse:
+ *   200 OK
+ *   {
+ *     id: string
+ *     email: string
+ *     name: string
+ *     createdAt: DateTime
+ *   }
+ *
+ */
 router.get("/", async (req, res) => {
   const { password, ...userDB } = await prisma.user.findUnique({where: { id: req.userId}});
   return res.json({...userDB}); 
 });
 
+/*
+ * Route: GET /user/chatrooms
+ * Description: Fetches the chatrooms the user is a member of
+ * Middleware: authMiddleware
+ *
+ * Success Response:
+ *   200 OK
+ *   [
+ *    {
+ *      id: string
+ *      name: string
+ *    }
+ *    ...
+ *   ]
+ *
+ */
 router.get("/chatrooms", async (req, res) => {
   const chatRooms = await prisma.chatMember.findMany({
     where: { userId: req.user.id },
@@ -18,6 +49,23 @@ router.get("/chatrooms", async (req, res) => {
   res.json(chatRooms);
 });
 
+/*
+ * Route: PATCH /user/name
+ * Description: Change username
+ * Middleware: authMiddleware
+ *
+ * Body Params:
+ *   newName (string) - The new name to set on the user 
+ *
+ * Success Response:
+ *   200 OK
+ *   {
+ *     message: string
+ *   }
+ *
+ * Errors:
+ *   400 newName param is missing
+ */
 router.patch("/name", async (req, res) => {
   const { newName } = req.body;
   
@@ -32,6 +80,26 @@ router.patch("/name", async (req, res) => {
 
   res.send({ message: "Name has been successfully changed" });
 });
+
+/* PATCH /user/password
+ * Description: Changes password with proper validation
+ * Middleware: authMiddleware
+ * 
+ * Body Params:
+ *   newPassword (string) - The new password to set
+ *   oldPassword (string) - Password before the change;
+ *                          Confirms if same with the password in db
+ * 
+ * Success Response:
+ *   200 OK
+ *   {
+ *     message: string
+ *   } 
+ *
+ * Error:
+ *   400 missing body params
+ *   400 incorrect old password
+ */
 
 // this does not have input validation (i.e. password length etc.)
 // could be validated over the client
@@ -61,6 +129,24 @@ router.patch("/password", async (req, res) => {
   return res.json({ message: "Password set successfully" })
 });
 
+/*
+ * Route: DELETE /user/
+ * Description: Hard deletes a user on the db
+ * Middleware: authMiddleware
+ *
+ * Body Params:
+ *   password (string) - current password of user
+ *
+ * Success Response
+ *   204 No Content
+ *   {
+ *     message: string
+ *   }
+ *
+ * Error
+ *   400 missing body param
+ *   409 incorrect password
+ */
 router.delete("/", async (req, res) => {
   const { password } = req.body;
 

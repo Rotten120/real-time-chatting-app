@@ -5,6 +5,30 @@ import { Message } from "../../lib/message.js"
 
 const router = express.Router();
 
+/*
+ * Route: GET /chat/:chatRoomId/messages
+ * Description: Fetches previous messages using pagination
+ * Middleware: authMiddleware, chatRoomAccess
+ *
+ * Success Response:
+ *   200 OK
+ *   [
+ *     {
+ *       id: string
+ *       content: string
+ *       createdAt: DateTime
+ *       user: {
+ *         name: string
+ *       }
+ *     }
+ *     ...
+ *   ]
+ *
+ * Error:
+ *   400 cursorId param is missing
+ *   400 limit param exceeds 20
+ *
+ */
 router.get("/:chatRoomId/messages", chatRoomAccess, async (req, res) => {
   const { cursorId = "", limit = 5 } = req.query;
   
@@ -43,6 +67,27 @@ router.get("/:chatRoomId/messages", chatRoomAccess, async (req, res) => {
   res.send(prevResMessages);
 });
 
+/*
+ * Route: POST /chat/:chatRoomId/messages
+ * Description: Sends a message with REST (so client is not updated; use for testing)
+ * Middleware: authMiddleware, chatRoomAccess
+ *
+ * Body Params:
+ *   content (string) - The content of message to send
+ *
+ * Success Response:
+ *   201 CREATED
+ *   {
+ *     id: string
+ *     sender: string
+ *     content: string
+ *     createdAt: DateTime
+ *   }
+ *
+ * Error:
+ *   400 body param is missing
+ *
+ */
 router.post("/:chatRoomId/messages", chatRoomAccess, async(req, res) => {
   const { content } = req.body;
 
@@ -72,6 +117,25 @@ router.post("/:chatRoomId/messages", chatRoomAccess, async(req, res) => {
   ));
 });
 
+/*
+ * Route: DELETE /chat/:chatRoomId/messages/:messageId
+ * Description: Deletes the user's message in a specified chatroom
+ * Middleware: authMiddleware, chatRoomAccess
+ *
+ * Path Params:
+ *   messageId (string) - identifier of a specific message
+ *
+ * Success Response:
+ *   204 NO CONTENT
+ *   {
+ *     message: string
+ *   }
+ *
+ * Error:
+ *   400 missing path params
+ *   404 message is not found
+ *
+ */
 router.delete("/:chatRoomId/messages/:messageId", chatRoomAccess, async (req, res) => {
   const { messageId } = req.params;
 

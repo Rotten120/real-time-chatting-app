@@ -1,6 +1,24 @@
 import { prisma } from "../lib/prismaClient.js"
 import { verifyToken } from "../lib/auth.js"
 
+/*
+ * authMiddleware
+ * Description: Validates the jwt token inside the cookie
+ *
+ * Cookie Params:
+ *   token: JWT
+ *
+ * Token Params:
+ *   userId: string
+ *
+ * Success Response:
+ *   req.user - contains user info except password (see schema for more info)
+ *
+ * Error:
+ *   401 empty/invalid token
+ *   404 user not found (based on userId in JWT)
+ *
+ */
 export const authMiddleware = async (req, res, next) => {
   const token = req.cookies.token;
   if(!token) {

@@ -8,6 +8,29 @@ import { authMiddleware } from "../middleware/authMiddleware.js"
 
 const router = express.Router();
 
+/*
+ * POST /auth/register
+ * Description: Creates a new account, saves token in cookies if successful
+ * Middleware: None
+ *
+ * Body Params:
+ *   name (string)
+ *   email (string) - should be unique
+ *   password (string)
+ *
+ * Success Response:
+ *   201 CREATED
+ *   {
+ *     message: string
+ *     token: string
+ *   }
+ *
+ * Error:
+ *   400 missing body params
+ *   409 email already exists
+ *   500 server error
+ *
+ */
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -36,6 +59,27 @@ router.post('/register', async (req, res) => {
   }
 });
 
+/*
+ * POST /auth/login
+ * Description: Exchanges login credentials for tokens, also saves token in cookies
+ * Middleware: None
+ *
+ * Body Params:
+ *   email (string)
+ *   password (string)
+ *
+ * Success Response:
+ *   200 OK
+ *   {
+ *     message: string
+ *     token: string
+ *   }
+ *
+ *  Error:
+ *    400 missing body params
+ *    409 wrong login credentials
+ *
+ */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -63,13 +107,37 @@ router.post("/login", async (req, res) => {
   } 
 });
 
+/*
+ * POST /auth/logout
+ * Description: Removes the token in the cookie
+ * Middleware: None
+ *
+ * Success Response:
+ *   200 OK
+ *   {
+ *     message: string
+ *   }
+ *
+ */
 router.post("/logout", async (req, res) => {
   await setCookie(res, "", 0); 
-  res.json({ message: "Successfully logged out" })
+  res.send({ message: "Successfully logged out" })
 });
 
+/*
+ * GET /auth/me
+ * Description: Fetches user's primary id
+ * Middleware: authMiddleware
+ *
+ * Success Response:
+ *   200 OK
+ *   {
+ *     userId: string
+ *   }
+ *
+ */
 router.get("/me", authMiddleware, async (req, res) => {
-  return res.json({"userId": req.user.id});
+  return res.send({ userId: req.user.id });
 });
 
 export default router;

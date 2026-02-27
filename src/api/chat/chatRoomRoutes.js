@@ -6,6 +6,25 @@ import { Message } from "../../lib/message.js"
 
 const router = express.Router();
 
+/*
+ * Route: POST /chat/:chatRoomName
+ * Description: Created a new chatroom
+ * Middleware: authMiddleware
+ *
+ * Path Params:
+ *   chatRoomName (string) - name of the chatroom
+ *
+ * Success Response:
+ *   201 CREATED
+ *   {
+ *     id: string
+ *     name: string
+ *     createdAt: DateTime
+ *   }
+ *
+ * Error:
+ *   400 missing path params
+ */
 router.post("/:chatRoomName", async (req, res) => {
   const { chatRoomName } = req.params;
 
@@ -24,14 +43,34 @@ router.post("/:chatRoomName", async (req, res) => {
     }
   }); 
 
-  res.status(400).json(chatRoom);
+  res.status(201).json(chatRoom);
 });
 
+/*
+ * Route: GET /chat/t/:chatRoomId
+ * Description: Serves the client for messaging
+ * Middleware: authMiddleware, chatRoomAccess
+ *
+ * Success Response:
+ *   200 OK
+ *   client.html
+ */
 router.get("/t/:chatRoomId", chatRoomAccess, async (req, res) => {
   res.sendFile(getPath("..", "..", "public", "client.html"));
 });
 
-// gets chatroom name for non-members
+/*
+ * Route: GET /chat/:chatRoomId/name
+ * Description: Fetches chatroom id (good for non-members)
+ * Middleware: authMiddleware, chatRoomExists
+ *
+ * Success Response:
+ *   200 OK
+ *   {
+ *     chatRoomName: string
+ *   }
+ *
+ */
 router.get("/:chatRoomId/name", chatRoomExists, async (req, res) => {
   const { name } = await prisma.chatRoom.findUnique({
     where: { id: req.chatRoom.id }
@@ -40,7 +79,30 @@ router.get("/:chatRoomId/name", chatRoomExists, async (req, res) => {
   res.json({ chatRoomName: name });
 });
 
-// gets chatroom deets for members
+/*
+ * Route: GET /chat/:chatRoomId
+ * Description: Fetches chatroom details and its members
+ * Middleware: authMiddleware, chatRoomAccess
+ *
+ * Success Response:
+ *   200 OK
+ *   {
+ *     name: string
+ *     createdAt: DateTime
+ *     memberCount: int
+ *     members: [
+ *       {
+ *         user: {
+ *           name: string
+ *           email: string
+ *         }
+ *         joinedAt: DateTime
+ *       }
+ *       ...
+ *     ]
+ *   }
+ *
+ */
 router.get("/:chatRoomId", chatRoomAccess, async (req, res) => {
   const chatRoomMembers = await prisma.chatMember.findMany({
     where: { chatRoomId: req.chatRoom.id },
@@ -58,6 +120,25 @@ router.get("/:chatRoomId", chatRoomAccess, async (req, res) => {
   });
 });
 
+/*
+ * Route: PATCH /chat/:chatRoomId
+ * Description: Change chatroom name
+ * Middleware: authMiddleware, chatRoomAccess
+ *
+ * Body Params:
+ *   chatRoomName (string) - the new chatroom name to update
+ *
+ * Success Response:
+ *   200 OK
+ *   {
+ *     message: string
+ *     name: string
+ *   }
+ *
+ * Error:
+ *   400 missing body params
+ *
+ */
 router.patch("/:chatRoomId", chatRoomAccess, async (req, res) => {
   const { chatRoomName } = req.body;
  
