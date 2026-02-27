@@ -155,7 +155,7 @@ router.delete("/:chatRoomId/messages/:messageId", chatRoomAccess, async (req, re
     return res.status(404).send({ message: "Message not found" });
   }
 
-  res.status(204).send({ message: "Message deleted" });
+  res.sendStatus(204);
 });
 
 export default router;

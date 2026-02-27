@@ -26,7 +26,7 @@ router.delete("/:chatRoomId/members", chatRoomAccess, async (req, res) => {
     }
   });
 
-  res.status(204).json({ message: "User has been removed from the chat group" });
+  res.sendStatus(204);
 });
 
 /*
