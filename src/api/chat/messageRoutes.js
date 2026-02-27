@@ -46,6 +46,10 @@ router.get("/:chatRoomId/messages", chatRoomAccess, async (req, res) => {
 router.post("/:chatRoomId/messages", chatRoomAccess, async(req, res) => {
   const { content } = req.body;
 
+  if(!content) {
+    return res.status(400).send({ message: "Message content is required" });
+  }
+
   const message = await prisma.message.create({
     data: {
       chatRoomId: req.chatRoom.id,
@@ -70,6 +74,10 @@ router.post("/:chatRoomId/messages", chatRoomAccess, async(req, res) => {
 
 router.delete("/:chatRoomId/messages/:messageId", chatRoomAccess, async (req, res) => {
   const { messageId } = req.params;
+
+  if(!messageId) {
+    return res.status(400).send({ message: "messageId is a required field" });
+  }
 
   const deletedMessage = await prisma.message.deleteMany({
     where: {

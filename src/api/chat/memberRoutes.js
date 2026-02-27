@@ -18,8 +18,6 @@ router.delete("/:chatRoomId/members", chatRoomAccess, async (req, res) => {
 });
 
 router.post("/:chatRoomId/members", chatRoomExists, async (req, res) => {
-  const { chatRoomId } = req.params;
-
   //checks if user is already member of chat room
   let chatMember = await prisma.chatMember.findMany({
     where: {

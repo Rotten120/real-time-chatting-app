@@ -8,6 +8,11 @@ const router = express.Router();
 
 router.post("/:chatRoomName", async (req, res) => {
   const { chatRoomName } = req.params;
+
+  if(!chatRoomName) {
+    return res.status(400).send({ message: "New chatroom name is required" });
+  }
+
   const chatRoom = await prisma.chatRoom.create({
     data: { name: chatRoomName }
   });
@@ -41,7 +46,6 @@ router.get("/:chatRoomId", chatRoomAccess, async (req, res) => {
     where: { chatRoomId: req.chatRoom.id },
     select: {
       user: { select: { name: true, email: true } },
-      role: true,
       joinedAt: true
     }
   });
@@ -56,7 +60,11 @@ router.get("/:chatRoomId", chatRoomAccess, async (req, res) => {
 
 router.patch("/:chatRoomId", chatRoomAccess, async (req, res) => {
   const { chatRoomName } = req.body;
-  
+ 
+  if(!chatRoomName) {
+    return res.status(400).send({ message: "New chatroom name is required" });
+  }
+
   const updateChatRoom = await prisma.chatRoom.update({
     where: { id: req.chatRoom.id },
     data: { name: chatRoomName }
