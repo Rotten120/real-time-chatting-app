@@ -13,6 +13,7 @@ export function initSocket(server) {
 
     console.log(`User ${socket.user.name} connects to room ${chatRoomId}`);
     socket.emit('me', socket.user);
+    socket.join(chatRoomId);
 
     socket.on('chat message', async (msg, callback) => {
       try {
@@ -39,6 +40,7 @@ export function initSocket(server) {
 
     
     // message recovery (yes its complicated)
+    const lastSeen = new Date(socket.handshake.auth.lastMsg);
 
     try {
       // renders the messages sent while user is offline
@@ -67,8 +69,6 @@ export function initSocket(server) {
     } catch(error) {
       console.log("Something went wrong: ", error);
     }
-
-    socket.join(chatRoomId);
   });
 
   return io;
